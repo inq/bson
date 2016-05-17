@@ -13,11 +13,9 @@ import Data.Time.Clock.POSIX (POSIXTime)
 import Data.Time.Clock (UTCTime(..), addUTCTime)
 import qualified Data.ByteString as S
 
-import Data.Text (Text)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck (Arbitrary(..), elements, oneof)
-import qualified Data.Text as T
 
 import Data.Bson (Val(cast', val), ObjectId(..), MinMaxKey(..), MongoStamp(..),
                   Symbol(..), Javascript(..), Regex(..), UserDefined(..),
@@ -28,9 +26,6 @@ import qualified Data.Bson as Bson
 
 instance Arbitrary S.ByteString where
     arbitrary = S.pack <$> arbitrary
-
-instance Arbitrary Text where
-    arbitrary = T.pack <$> arbitrary
 
 instance Arbitrary POSIXTime where
     arbitrary = fromInteger <$> arbitrary
@@ -130,5 +125,5 @@ tests = testGroup "Data.Bson.Tests"
     , testProperty "Val Function"    (testVal :: Function -> Bool)
     , testProperty "Val Binary"      (testVal :: Binary -> Bool)
     -- , testProperty "Val Document"    (testVal :: Document -> Bool)
-    , testProperty "Val Text"        (testVal :: Text -> Bool)
+    --, testProperty "Val Text"        (testVal :: Text -> Bool)
     ]

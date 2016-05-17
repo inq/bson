@@ -42,18 +42,12 @@ import Data.Typeable hiding (cast)
 import Data.Word (Word8, Word16, Word32, Word64)
 import Numeric (readHex, showHex)
 import System.IO.Unsafe (unsafePerformIO)
-import Text.Read (Read(..))
 
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Char8 as SC
-import qualified Text.ParserCombinators.ReadP as R
-import qualified Text.ParserCombinators.ReadPrec as R (lift, readS_to_Prec)
 
 import Control.Monad.Identity (runIdentity)
 import Network.BSD (getHostName)
-import Data.Text (Text)
-
-import qualified Data.Text as T
 import qualified Crypto.Hash.MD5 as MD5
 
 getProcessID :: IO Int
@@ -81,7 +75,7 @@ type Document = [Field]
 -- | Recursively lookup a nested field in a Document.
 (!?) :: Val a => Document -> Label -> Maybe a
 doc !? l = foldM (flip lookup) doc (init chunks) >>= lookup (last chunks)
-  where chunks = T.split (== '.') l
+  where chunks = SC.split '.' l
 
 look :: (Monad m) => Label -> Document -> m Value
 -- ^ Value of field in document, or fail (Nothing) if field not found
@@ -134,16 +128,16 @@ k =: v = k := val v
 k =? ma = maybeToList (fmap (k =:) ma)
 
 instance Show Field where
-  showsPrec d (k := v) = showParen (d > 0) $ showString (' ' : T.unpack k) . showString ": " . showsPrec 1 v
+  showsPrec d (k := v) = showParen (d > 0) $ showString (' ' : SC.unpack k) . showString ": " . showsPrec 1 v
 
-type Label = Text
+type Label = S.ByteString
 -- ^ The name of a BSON field
 
 -- * Value
 
 -- | A BSON value is one of the following types of values
 data Value = Float Double
-           | String Text
+           | String S.ByteString
            | Doc Document
            | Array [Value]
            | Bin Binary
@@ -241,7 +235,7 @@ instance Val Float where
   cast' (Int64 x) = Just (fromIntegral x)
   cast' _         = Nothing
 
-instance Val Text where
+instance Val S.ByteString where
   val                    = String
   cast' (String x)       = Just x
   cast' (Sym (Symbol x)) = Just x
@@ -249,13 +243,13 @@ instance Val Text where
 
 instance Val Char where
   val x   = valList [x]
-  valList = String . T.pack
+  valList = String . SC.pack
   cast' v = cast'List v >>= safeHead
     where safeHead list = case list of
                            x:_ -> Just x
                            _   -> Nothing
-  cast'List (String x)       = Just $ T.unpack x
-  cast'List (Sym (Symbol x)) = Just $ T.unpack x
+  cast'List (String x)       = Just $ SC.unpack x
+  cast'List (Sym (Symbol x)) = Just $ SC.unpack x
   cast'List _                = Nothing
 
 instance Val Field where
@@ -390,37 +384,37 @@ fitInt n =
 
 -- ** Binary types
 
-newtype Binary = Binary S.ByteString  deriving (Typeable, Show, Read, Eq, Ord)
+newtype Binary = Binary S.ByteString  deriving (Typeable, Show, Eq, Ord)
 
-newtype Function = Function S.ByteString  deriving (Typeable, Show, Read, Eq, Ord)
+newtype Function = Function S.ByteString  deriving (Typeable, Show, Eq, Ord)
 
-newtype UUID = UUID S.ByteString  deriving (Typeable, Show, Read, Eq, Ord)
+newtype UUID = UUID S.ByteString  deriving (Typeable, Show, Eq, Ord)
 
-newtype MD5 = MD5 S.ByteString  deriving (Typeable, Show, Read, Eq, Ord)
+newtype MD5 = MD5 S.ByteString  deriving (Typeable, Show, Eq, Ord)
 
-newtype UserDefined = UserDefined S.ByteString  deriving (Typeable, Show, Read, Eq, Ord)
+newtype UserDefined = UserDefined S.ByteString  deriving (Typeable, Show, Eq, Ord)
 
 -- ** Regex
 
-data Regex = Regex Text Text  deriving (Typeable, Show, Read, Eq, Ord)
+data Regex = Regex S.ByteString S.ByteString  deriving (Typeable, Show, Eq, Ord)
 -- ^ The first string is the regex pattern, the second is the regex options string. Options are identified by characters, which must be listed in alphabetical order. Valid options are *i* for case insensitive matching, *m* for multiline matching, *x* for verbose mode, *l* to make \\w, \\W, etc. locale dependent, *s* for dotall mode (\".\" matches everything), and *u* to make \\w, \\W, etc. match unicode.
 
 -- ** Javascript
 
-data Javascript = Javascript Document Text deriving (Typeable, Show, Eq, Ord)
+data Javascript = Javascript Document S.ByteString deriving (Typeable, Show, Eq, Ord)
 -- ^ Javascript code with possibly empty environment mapping variables to values that the code may reference
 
 -- ** Symbol
 
-newtype Symbol = Symbol Text  deriving (Typeable, Show, Read, Eq, Ord)
+newtype Symbol = Symbol S.ByteString  deriving (Typeable, Show, Eq, Ord)
 
 -- ** MongoStamp
 
-newtype MongoStamp = MongoStamp Int64  deriving (Typeable, Show, Read, Eq, Ord)
+newtype MongoStamp = MongoStamp Int64  deriving (Typeable, Show, Eq, Ord)
 
 -- ** MinMax
 
-data MinMaxKey = MinKey | MaxKey  deriving (Typeable, Show, Read, Eq, Ord)
+data MinMaxKey = MinKey | MaxKey  deriving (Typeable, Show, Eq, Ord)
 
 -- ** ObjectId
 
@@ -430,11 +424,11 @@ data ObjectId = Oid Word32 Word64  deriving (Typeable, Eq, Ord)
 instance Show ObjectId where
   showsPrec _ (Oid x y) = showHexLen 8 x . showHexLen 16 y
 
-instance Read ObjectId where
-  readPrec = do
-    [(x, "")] <- readHex <$> R.lift (R.count 8 R.get)
-    y <- R.readS_to_Prec $ const readHex
-    return (Oid x y)
+--instance Read ObjectId where
+--  readPrec = do
+--    [(x, "")] <- readHex <$> R.lift (R.count 8 R.get)
+--    y <- R.readS_to_Prec $ const readHex
+--    return (Oid x y)
 
 timestamp :: ObjectId -> UTCTime
 -- ^ Time when objectId was created
