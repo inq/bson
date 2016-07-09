@@ -24,15 +24,15 @@ Build-type:    Simple
 Extra-Source-Files: CHANGELOG.md
 
 Library
-  Build-depends:      base < 5
+  Build-depends:      base 
                     , time
                     , bytestring
-                    , binary >= 0.5 && < 0.8
+                    , binary 
                     , cryptohash
                     , data-binary-ieee754
-                    , mtl >= 2
+                    , mtl 
                     , network
-                    , text >= 0.11
+                    , text 
 
   Default-Language: Haskell2010
   Default-Extensions: BangPatterns, CPP
@@ -50,18 +50,18 @@ Test-suite bson-tests
                     Data.Bson.Tests
   Ghc-options:      -Wall -fno-warn-orphans
 
-  Build-depends:      test-framework             >= 0.4 && < 0.9
-                    , test-framework-quickcheck2 >= 0.2 && < 0.4
-                    , QuickCheck                 >= 2.4 && < 2.9
+  Build-depends:      test-framework        
+                    , test-framework-quickcheck2 
+                    , QuickCheck         
                     -- Copied from regular dependencies...
-                    , base < 5
+                    , base 
                     , time
                     , bytestring
-                    , binary >= 0.5 && < 0.8
+                    , binary
                     , cryptohash
                     , data-binary-ieee754
-                    , mtl >= 2
+                    , mtl 
                     , network
-                    , text >= 0.11
+                    , text 
   Default-Language: Haskell2010
   Default-Extensions: CPP
