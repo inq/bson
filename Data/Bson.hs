@@ -42,9 +42,12 @@ import Data.Typeable hiding (cast)
 import Data.Word (Word8, Word16, Word32, Word64)
 import Numeric (readHex, showHex)
 import System.IO.Unsafe (unsafePerformIO)
+import Text.Read (Read(..))
 
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Char8 as SC
+import qualified Text.ParserCombinators.ReadP as R
+import qualified Text.ParserCombinators.ReadPrec as R (lift, readS_to_Prec)
 
 import Control.Monad.Identity (runIdentity)
 import Network.BSD (getHostName)
@@ -424,11 +427,11 @@ data ObjectId = Oid Word32 Word64  deriving (Typeable, Eq, Ord)
 instance Show ObjectId where
   showsPrec _ (Oid x y) = showHexLen 8 x . showHexLen 16 y
 
---instance Read ObjectId where
---  readPrec = do
---    [(x, "")] <- readHex <$> R.lift (R.count 8 R.get)
---    y <- R.readS_to_Prec $ const readHex
---    return (Oid x y)
+instance Read ObjectId where
+  readPrec = do
+    [(x, "")] <- readHex <$> R.lift (R.count 8 R.get)
+    y <- R.readS_to_Prec $ const readHex
+    return (Oid x y)
 
 timestamp :: ObjectId -> UTCTime
 -- ^ Time when objectId was created
